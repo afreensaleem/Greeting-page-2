@@ -9,15 +9,24 @@ COPY . /usr/local/tomcat/webapps/ROOT
 
 # Ensure WEB-INF/lib and classes directories exist and set permissions
 RUN mkdir -p /usr/local/tomcat/webapps/ROOT/WEB-INF/lib && \
-    mkdir -p /usr/local/tomcat/webapps/ROOT/WEB-INF/classes && \
+    mkdir -p /usr/local/tomcat/webapps/ROOT/WEB-INF/classes/helper && \
     chmod -R 755 /usr/local/tomcat/webapps/ROOT/WEB-INF
 
-# Copy dependencies to WEB-INF/lib
-RUN cp /usr/local/tomcat/webapps/ROOT/lib/*.jar /usr/local/tomcat/webapps/ROOT/WEB-INF/lib/
+# Create lib/ directory if it doesn't exist and copy dependencies to WEB-INF/lib
+RUN mkdir -p /usr/local/tomcat/webapps/ROOT/lib && \
+    sh -c 'cp /usr/local/tomcat/webapps/ROOT/lib/*.jar /usr/local/tomcat/webapps/ROOT/WEB-INF/lib/ || true'
 
-# Compile FlaskClient.java and move to WEB-INF/classes
-RUN javac -cp ".:/usr/local/tomcat/webapps/ROOT/lib/*" /usr/local/tomcat/webapps/ROOT/FlaskClient.java && \
-    mv /usr/local/tomcat/webapps/ROOT/FlaskClient.class /usr/local/tomcat/webapps/ROOT/WEB-INF/classes/
+# Compile FlaskClient.java from either helper/ or WEB-INF/classes/helper/ and move to WEB-INF/classes/helper
+RUN if [ -f /usr/local/tomcat/webapps/ROOT/helper/FlaskClient.java ]; then \
+      javac -cp ".:/usr/local/tomcat/webapps/ROOT/lib/*" /usr/local/tomcat/webapps/ROOT/helper/FlaskClient.java && \
+      mv /usr/local/tomcat/webapps/ROOT/helper/FlaskClient.class /usr/local/tomcat/webapps/ROOT/WEB-INF/classes/helper/; \
+    elif [ -f /usr/local/tomcat/webapps/ROOT/WEB-INF/classes/helper/FlaskClient.java ]; then \
+      javac -cp ".:/usr/local/tomcat/webapps/ROOT/lib/*" /usr/local/tomcat/webapps/ROOT/WEB-INF/classes/helper/FlaskClient.java && \
+      mv /usr/local/tomcat/webapps/ROOT/WEB-INF/classes/helper/FlaskClient.class /usr/local/tomcat/webapps/ROOT/WEB-INF/classes/helper/; \
+    else \
+      echo "Error: FlaskClient.java not found in helper/ or WEB-INF/classes/helper/"; \
+      exit 1; \
+    fi
 
 # Expose Tomcat default port
 EXPOSE 8080

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Anniversary Image Upload</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 20px;
+      background-color: #e3d5ca;
+    }
+    form {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+    input[type="text"], input[type="file"] {
+      padding: 5px;
+      width: 300px;
+    }
+    button {
+      padding: 10px 20px;
+      background-color: #f08080;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #d06666;
+    }
+    #result {
+      margin-top: 20px;
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  <h1>Upload Anniversary Details</h1>
+  <form id="uploadForm" enctype="multipart/form-data">
+    <label>Name:</label>
+    <input type="text" name="name1" required>
+    <label>Your Tag Line:</label>
+    <input type="text" name="name2" required>
+    <label>Select Image (Main Display):</label>
+    <input type="file" name="mainImage" accept="image/*" required>
+    <label>Upload Image to Remove Background:</label>
+    <input type="file" name="bgImage" accept="image/*" required>
+    <button type="submit">Submit</button>
+  </form>
+  <div id="result"></div>
+
+  <script>
+    document.getElementById('uploadForm').addEventListener('submit', async function (event) {
+      event.preventDefault();
+      const form = event.target;
+      const formData = new FormData(form);
+      try {
+        const response = await fetch('/celeb.jsp', {
+          method: 'POST',
+          body: formData
+        });
+        if (!response.ok) {
+          throw new Error('Server error: ' + response.status);
+        }
+        const result = await response.text();
+        document.getElementById('result').innerHTML = result;
+      } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('result').innerText = 'Error submitting form: ' + error.message;
+      }
+    });
+  </script>
+</body>
+</html>

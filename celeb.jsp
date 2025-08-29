@@ -17,6 +17,57 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Anton+SC&family=Audiowide&family=Playwrite+US+Trad:wght@100..400&display=swap" rel="stylesheet">
+  <%
+    String name = "";
+    String tagline = "";
+    String base64Image = "";
+    String fileType = "";
+    String bgRemovedBase64 = "";
+    try {
+      if (ServletFileUpload.isMultipartContent(request)) {
+        // Configure file upload settings
+        DiskFileItemFactory factory = new DiskFileItemFactory();
+        factory.setSizeThreshold(10 * 1024 * 1024); // 10MB memory threshold
+        factory.setRepository(new java.io.File(System.getProperty("java.io.tmpdir")));
+        ServletFileUpload upload = new ServletFileUpload(factory);
+        upload.setFileSizeMax(50 * 1024 * 1024); // 50MB max file size
+        upload.setSizeMax(100 * 1024 * 1024); // 100MB max request size
+
+        List<FileItem> items = upload.parseRequest(request);
+        for (FileItem item : items) {
+          if (item.isFormField()) {
+            if ("name1".equals(item.getFieldName())) {
+              name = item.getString("UTF-8");
+            } else if ("name2".equals(item.getFieldName())) {
+              tagline = item.getString("UTF-8");
+            }
+          } else {
+            String fieldName = item.getFieldName();
+            if ("mainImage".equals(fieldName)) {
+              fileType = item.getContentType();
+              InputStream inputStream = item.getInputStream();
+              byte[] bytes = IOUtils.toByteArray(inputStream);
+              base64Image = Base64.getEncoder().encodeToString(bytes);
+            } else if ("bgImage".equals(fieldName)) {
+              InputStream inputStream = item.getInputStream();
+              byte[] bytes = IOUtils.toByteArray(inputStream);
+              try {
+                bgRemovedBase64 = FlaskClient.sendImageToFlask(new ByteArrayInputStream(bytes));
+              } catch (Exception e) {
+                out.println("Error calling Flask API: " + e.getMessage() + "<br>");
+                e.printStackTrace(new java.io.PrintWriter(out));
+              }
+            }
+          }
+        }
+      } else {
+        out.println("Error: Request is not multipart/form-data");
+      }
+    } catch (Exception e) {
+      out.println("Error processing form: " + e.getMessage() + "<br>");
+      e.printStackTrace(new java.io.PrintWriter(out));
+    }
+  %>
   <style>
     .audiowide-regular {
       font-family: "Audiowide", sans-serif;

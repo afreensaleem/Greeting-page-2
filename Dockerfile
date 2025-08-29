@@ -16,15 +16,27 @@ RUN mkdir -p /usr/local/tomcat/webapps/ROOT/WEB-INF/lib && \
 RUN mkdir -p /usr/local/tomcat/webapps/ROOT/lib && \
     sh -c 'cp /usr/local/tomcat/webapps/ROOT/lib/*.jar /usr/local/tomcat/webapps/ROOT/WEB-INF/lib/ || true'
 
+# Debug: List directory contents to verify file presence
+RUN echo "Listing contents of /usr/local/tomcat/webapps/ROOT:" && \
+    ls -la /usr/local/tomcat/webapps/ROOT && \
+    echo "Listing contents of /usr/local/tomcat/webapps/ROOT/helper:" && \
+    ls -la /usr/local/tomcat/webapps/ROOT/helper || true && \
+    echo "Listing contents of /usr/local/tomcat/webapps/ROOT/WEB-INF/classes/helper:" && \
+    ls -la /usr/local/tomcat/webapps/ROOT/WEB-INF/classes/helper || true
+
 # Compile FlaskClient.java from either helper/ or WEB-INF/classes/helper/ and move to WEB-INF/classes/helper
 RUN if [ -f /usr/local/tomcat/webapps/ROOT/helper/FlaskClient.java ]; then \
+      echo "Found FlaskClient.java in helper/"; \
       javac -cp ".:/usr/local/tomcat/webapps/ROOT/lib/*" /usr/local/tomcat/webapps/ROOT/helper/FlaskClient.java && \
       mv /usr/local/tomcat/webapps/ROOT/helper/FlaskClient.class /usr/local/tomcat/webapps/ROOT/WEB-INF/classes/helper/; \
     elif [ -f /usr/local/tomcat/webapps/ROOT/WEB-INF/classes/helper/FlaskClient.java ]; then \
+      echo "Found FlaskClient.java in WEB-INF/classes/helper/"; \
       javac -cp ".:/usr/local/tomcat/webapps/ROOT/lib/*" /usr/local/tomcat/webapps/ROOT/WEB-INF/classes/helper/FlaskClient.java && \
       mv /usr/local/tomcat/webapps/ROOT/WEB-INF/classes/helper/FlaskClient.class /usr/local/tomcat/webapps/ROOT/WEB-INF/classes/helper/; \
     else \
       echo "Error: FlaskClient.java not found in helper/ or WEB-INF/classes/helper/"; \
+      ls -la /usr/local/tomcat/webapps/ROOT/helper || true; \
+      ls -la /usr/local/tomcat/webapps/ROOT/WEB-INF/classes/helper || true; \
       exit 1; \
     fi
 
@@ -33,3 +45,4 @@ EXPOSE 8080
 
 # Start Tomcat
 CMD ["catalina.sh", "run"]
+

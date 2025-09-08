@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Anniversary Image Upload</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 20px;
+      background-color: #e3d5ca;
+    }
+    form {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+    input[type="text"], input[type="file"] {
+      padding: 5px;
+      width: 300px;
+    }
+    button {
+      padding: 10px 20px;
+      background-color: #f08080;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #d06666;
+    }
+    #result {
+      margin-top: 20px;
+      color: red;
+    }
+
+    /* Spinner */
+    #spinner {
+      display: none;
+      margin-top: 20px;
+    }
+    .loader {
+      border: 6px solid #f3f3f3;
+      border-top: 6px solid #f08080;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: auto;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <h1>Upload Anniversary Details</h1>
+  <form id="uploadForm" enctype="multipart/form-data">
+    <label>Name:</label>
+    <input type="text" name="name1" required>
+    <label>Your Tag Line:</label>
+    <input type="text" name="name2" required>
+    <label>Select Image (Main Display):</label>
+    <input type="file" name="mainImage" accept="image/*" required>
+    <label>Upload Image to Remove Background:</label>
+    <input type="file" name="bgImage" accept="image/*" required>
+    <button type="submit">Submit</button>
+  </form>
+
+  <div id="spinner">
+    <div class="loader"></div>
+    <div>Please wait while we process your image (~10 seconds)</div>
+  </div>
+
+  <div id="result"></div>
+
+  <script>
+    const MAX_BG_SIZE_MB = 5;
+
+    document.getElementById('uploadForm').addEventListener('submit', async function(event) {
+      event.preventDefault();
+      const form = event.target;
+      const bgFile = form.bgImage.files[0];
+
+      if (bgFile.size > MAX_BG_SIZE_MB * 1024 * 1024) {
+        document.getElementById('result').innerText = 'Background image is too large. Max 5 MB allowed.';
+        return;
+      }
+
+      const formData = new FormData(form);
+      document.getElementById('spinner').style.display = 'block';
+      document.getElementById('result').innerText = '';
+
+      try {
+        const response = await fetch('/celeb.jsp', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!response.ok) {
+          throw new Error('Server error: ' + response.status);
+        }
+
+        const resultHTML = await response.text();
+        document.getElementById('spinner').style.display = 'none';
+        document.getElementById('result').innerHTML = resultHTML;
+      } catch (error) {
+        document.getElementById('spinner').style.display = 'none';
+        document.getElementById('result').innerText = 'Error submitting form: ' + error.message;
+      }
+    });
+  </script>
+</body>
+</html>
